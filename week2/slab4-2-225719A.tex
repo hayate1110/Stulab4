@@ -1,0 +1,233 @@
+\documentclass[a4paper, 11pt, titlepage]{jsarticle} 
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{comment}
+\usepackage{url}
+\usepackage{here}
+
+\title{2023-知能情報基礎演習\\4-2 無線通信における降雨減衰特性のモデリング} 
+\date{提出日: \today\\提出期限日: 2023年12月19日\\実験日: 2023年11月5日, 12日}
+\author{提出者氏名: 城間 颯\\提出者学籍番号: 225719A\\担当教員名: 宮里 智樹}
+
+\begin{document}
+\maketitle
+\tableofcontents 
+\clearpage 
+
+\section{1週目}
+\subsection{課題1}
+mattermost からデータをダウンロードし、中身を確認した。
+
+RainDataのフォルダ構成を以下に示す。
+
+\begin{verbatim}
+RainData
+├── 20090601
+│   └── 20090601_rain.csv
+├── 20090602
+│   └── 20090602_rain.csv
+├── 20090603
+│   └── 20090603_rain.csv
+├── 20090604
+│   └── 20090604_rain.csv
+...
+├── 20091230
+│   └── 20091230_rain.csv
+└── 20091231
+		└── 20091231_rain.csv
+\end{verbatim}
+
+RxDataのフォルダ構成を以下に示す。
+
+\clearpage
+\begin{verbatim}
+RxData
+├── 200906
+│   ├── 20090601
+│   │  ├── 192.168.100.11_csv.log
+│   │   └── 192.168.100.9_csv.log
+│   ├── 20090602
+│   │   ├── 192.168.100.11_csv.log
+│   │   └── 192.168.100.9_csv.log
+│   ├── 20090603
+│   │   ├── 192.168.100.11_csv.log
+│   │   └── 192.168.100.9_csv.log
+│   ...
+│
+├── 200910
+│   ├── 20091001
+│   │   ├── 192.168.100.11_csv.log
+│   │   └── 192.168.100.9_csv.log
+│   ...
+│
+├── 200911
+│   ├── 20091101
+│   │   ├── 192.168.100.11_csv.log
+│   │   └── 192.168.100.9_csv.log
+│   ...
+│
+└── 200912
+    ├── 20091201
+    │   ├── 192.168.100.11_csv.log
+    │   └── 192.168.100.9_csv.log
+    ...
+\end{verbatim}
+
+\subsection{課題2}
+2秒毎に記録されているRainDataの測定値と、1分毎に記録されているRxDataの測定値を、10秒毎のデータに作りかえた。
+
+前処理済みのデータを、元データとフォルダ構成は同じにして、RxData\_fixと、RainData\_fixという名前のフォルダに保存した。
+
+RainDataの前処理を行うスクリプトを、listings\ref{pg:pp_rain}に示す。
+
+RxDataの前処理を行うスクリプトを、listings\ref{pg:pp_rx}に示す。
+
+スクリプトは、Pythonを用いて作成した。
+
+データの欠損値は、直前のデータで置き換えた。直前のデータがない場合は、直後のデータで置き換えた。
+
+\lstinputlisting[language=Python, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=RainDataの前処理用スクリプト, 
+label=pg:pp_rain]{pp_RainData.py}
+
+\lstinputlisting[language=Python, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=RxDataの前処理用スクリプト, 
+label=pg:pp_rx]{pp_RxData.py}
+
+\section{2週目}
+\subsection{手順1}
+1分間降雨強度を1時間(60分)降雨強度に変換した。
+
+変換後のデータは、元データとフォルダ構成は同じにして、RainData\_unit\_convという名前のフォルダに保存した。
+
+計算式は以下を用いた。雨粒の量をcとする。
+$$
+S \lbrack mm/h \rbrack = c \times 0.0083333 \times 60
+$$
+
+雨粒量から、1時間(60分)降雨強度に変換するスクリプトをlistings\ref{pg:unit_rain}に示す。
+
+\lstinputlisting[language=Python, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=RainDataの単位変換スクリプト, 
+label=pg:unit_rain]{unit_conv_RainData.py}
+
+\subsection{手順2}
+RxDataの、18GHzの場合の、受信強度の生データを、物理量$\lbrack dB \rbrack$に変換した。
+
+変換後のデータは、元データとフォルダ構成は同じにして、RxData\_unit\_convという名前のフォルダに保存した。
+
+計算式は以下を用いた。受信電界元の値をEとする。
+\begin{align*}
+	P [dB] = 
+	\begin{cases}
+		E \div 2 - 121 & \text{if $E \geq 0$}\\
+		(E + 256) \div 2 - 121 & \text{if $E < 0$}\\
+	\end{cases}
+\end{align*}
+
+RxDataを単位変換するスクリプトをlistings\ref{pg:unit_rx}に示す。
+
+\lstinputlisting[language=Python, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=RxDataの単位変換スクリプト, 
+label=pg:unit_rx]{unit_conv_RxData.py}
+
+\subsection{手順3}
+頻度分布を求めるにあたって、基準となる数値を決めた。
+
+1時間降雨強度の最大値は、143.499426[mm/h]。最小値は、0.0[mm/h]であった。
+
+したがって、RainDataの、1時間降雨強度の出現頻度を求める最大値は、144[mm/h]。最小値は、0[mm/h]とした。
+また、刻み間隔は3[mm/h]とした。
+
+18GHzの場合の受信強度の最大値は、-173.0[dB]。最小値は、-229.5[dB]であった。
+
+したがって、RxDataの、18GHzの場合の、受信強度の出現頻度を求める最大値は、0[dB]。最小値は、-230[dB]とした。
+また、刻み間隔は-3[dB]とした。
+
+26GHzの場合の受信強度の最大値は、-1.0[dB]。最小値は、-99.0[dB]であった。
+
+したがって、RxDataの、26GHzの場合の、受信強度の出現頻度を求める最大値は、0[dB]。最小値は、-100[dB]とした。
+また、刻み間隔は-3[dB]とした。
+
+\subsection{手順4}
+前処理と単位変換済みのRainDataから、3[mm/h]の刻み間隔ごとに、当てはまるデータが何個あったのかを数え、頻度分布を作成した。
+
+同様に、18GHzの場合と、26GHzの場合の、RxDataでも、-3[dB]の刻み間隔ごとに、当てはまるデータが何個あったのかを数え、頻度分布を作成した。
+
+\subsection{手順5}
+頻度分布を足し合わせて累積分布を作成した。
+
+RainDataの頻度分布を求めるプログラムを、listings\ref{pg:dist_rain}に示す。
+
+RxDataの、18GHzの場合の、頻度分布を求めるプログラムを、listings\ref{pg:dist_rx_18}に示す。
+
+RxDataの、26GHzの場合の、頻度分布を求めるプログラムを、listings\ref{pg:dist_rx_26}に示す。
+
+頻度分布を、pandasのDataFrameとして、変数に保存していたため、pandasのcumsum()を用いて、累積和を計算した。
+
+また、RainDataの$0[mm/h] \sim 3[mm/h]$および、RxDataの$0[dB] \sim -3[dB]$の区間のデータは、4ヶ月の総時間数、1051000[10秒]に置き換えた。
+
+\lstinputlisting[language=Python, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=RainDataのグラフ作成スクリプト, 
+label=pg:dist_rain]{make_dist_RainData.py}
+
+\lstinputlisting[language=Python, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=RxData(18GHz)のグラフ作成スクリプト, 
+label=pg:dist_rx_18]{make_dist_RxData_18.py}
+
+\lstinputlisting[language=Python, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=RxData(26GHz)のグラフ作成スクリプト, 
+label=pg:dist_rx_26]{make_dist_RxData_26.py}
+
+\subsubsection{手順6}
+matplotlibを用いて、累積分布のグラフを作成した。
+
+累積分布を求めるプログラムは、頻度分布を求めるプログラムと一緒に記述した。
+
+\subsection{手順7}
+横軸を時間から、パーセンテージに直した。
+各データの累積時間(単位: 10秒)を、4ヶ月の総時間数、1051000[10秒]で割り、結果に100をかけて、パーセンテージを出した。
+
+計算式を以下に示す。各データの累積時間(単位: 10秒)をtとする。
+$$
+r [\%] = \frac{t}{1051000} \times 100
+$$
+
+\subsection{手順8}
+グラフの横軸を対数軸とし、片対数グラフとした。
+
+降雨強度累積時間分布を図\ref{fig:rain_dist}に示す。
+
+18GHzの場合の、受信強度累積時間分布を図\ref{fig:rx_dist_18}に示す。
+
+26GHzの場合の、受信強度累積時間分布を図\ref{fig:rx_dist_26}に示す。
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{rain_dist.png}
+	\caption{降雨強度累積時間分布}
+	\label{fig:rain_dist}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{rx_dist_18.png}
+	\caption{受信強度累積時間分布(18GHz)}
+	\label{fig:rx_dist_18}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[]{rx_dist_26.png}
+	\caption{受信強度累積時間分布(26GHz)}
+	\label{fig:rx_dist_26}
+\end{figure}
+
+\section*{参考文献・引用文献}
+
+\begin{thebibliography}{99}
+\bibitem{stulab4} 宮里 智樹 . “2023-知能情報基礎演習 4-2 無線通信における降雨減衰特性のモデリング . $2023 知能情報基礎演習4 授業資料$ .
+\end{thebibliography}
+
+\end{document}

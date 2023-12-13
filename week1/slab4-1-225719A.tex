@@ -1,0 +1,369 @@
+\documentclass[a4paper, 11pt, titlepage]{jsarticle} 
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{comment}
+\usepackage{url}
+\usepackage{here}
+
+
+\title{2023-知能情報基礎演習\\4-1 微分方程式の数値解法} 
+\date{提出日: \today\\提出期限日: 2023年12月5日\\実験日: 2023年11月28日}
+\author{提出者氏名: 城間 颯\\提出者学籍番号: 225719A\\担当教員名: 宮里 智樹}
+
+\begin{document}
+\maketitle
+\tableofcontents 
+\clearpage 
+
+\section{問題1}
+常微分方程式に初期値を与えることで、積分定数などの未知数を含まない形で、元の関数を求めることができる。
+このような問題を初期値問題と呼ぶ。
+オイラー法は、初期値問題を数値的に解く方法である。
+例として、以下のような常微分方程式の初期値問題を考える。
+$$
+\frac{dy}{dx} = f(x,y), y(x_0) = y_0
+$$
+この常微分方程式の解$y=y(x)$が図\ref{fig:y}のような曲線になっているとする。
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{y.png}
+	\caption{y=y(x)のグラフ}
+	\label{fig:y}
+\end{figure}
+
+微分方程式を数値的に解くとは、初期値$x_0$から始めて、$x_1=x_0+h, x_2=x_1+h, \dots$における$y(x)$の値を順次求めていくことに対応する。
+このときのhを刻み幅と呼ぶ。
+
+最も単純に考えると、今yのxに関する微分$\frac{dy}{dx}$、すなわち曲線の傾きがf(x,y)なので、
+$$
+y(x_1) = y(x_0) + hf(x_0,y_0)
+$$
+のように近似すれば、十分に小さいhに対しては、それなりに良い解を得られると考えられる。
+$y(x_1)$をオイラー法で求めたときの様子を図\ref{fig:y_euler}に示す。
+
+これを一般化して、
+$$
+y(x_i) = y(x_{i-1}) + hf(x_{i-1},y_{i-1})
+$$
+という漸化式にしたがって、順次$y(x_1), y(x2), \dots$を求めていく方法を、オイラー法または前進オイラー法と呼ぶ。
+
+オイラー法は刻み幅hを十分に小さくすることで、高い精度を得られるはずだが、実際には、
+\begin{itemize}
+	\item hを小さくすると、計算回数が増え、計算量が増加する
+	\item hを小さくすると、丸め誤差が大きくなる
+	\item 計算回数が増えると、誤差の累積も増加する
+\end{itemize}
+といった問題があり、それほど良い精度は得られない。
+
+\section{問題2}
+初期値問題
+$$
+\frac{dx}{dt} = -x, x(0) = 1
+$$
+を解く。
+
+\begin{align*}
+	\frac{dx}{dt} &= -x\\
+	dx &= -xdt\\
+	\int \frac{1}{x}dx &= -\int dt\\
+	\ln x &= -t + C\\
+	x &= e^{-t + c} = e^{c}e^{-t} = C'e^{-t}\\
+	x(0) &= C'e^{-0} = C' = 1\\
+\end{align*}
+よって、$x = e^{-t}$。
+
+\section{実験:野球ボールの軌道計算}
+Listing\ref{pg:euler}に、実験で使用したオイラー法による野球ボールの軌道計算のプログラムを示す。
+
+このプログラムは、オイラー法により、野球ボールの軌道計算を行うプログラムで、
+\begin{align*}
+	v_{i+1} &= v_{i} + \tau \cdot (\frac{1}{m} F_a(v_{i}) - g\hat{y})\\
+	r_{i+1} &= r_{i} + \tau \cdot v_{i}\\
+	\\
+	F_a(v) &= -\frac{1}{2}C_d\rho A|v|v\\
+\end{align*}
+の漸化式にしたがって、各時刻の、速度と位置の値を計算している。
+
+\lstinputlisting[language=C, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=オイラー法による野球ボールの軌道計算のプログラム, 
+label=pg:euler]{baseball.cpp}
+
+\section{問題3}
+$$
+\frac{dy}{dx} = d(x,y), y(x_0) = y_0
+$$
+の初期値問題を考える。
+
+オイラー法では、初期値問題の解y(x)はわからず、現在わかっている関数y(x)上の点$(x_i, y_i)$を接点とするy(x)の接線を求め、
+その接線が、点$(x_i, y_i)$の近くでは、関数y(x)を近似的に表しているとみなして、$x_{i+1}$における接線の高さ$y_{i+1}'$を、真の値である$y(x_{i+1})$の近似値であると考える。
+この時のイメージを図\ref{fig:y_euler}に示す。
+
+$\tau$は、$x_{i+1}とx_i$の差を表す。
+したがって、$\tau$を大きくするほど、$x_{i+1}とx_i$は離れるため、接線から求める点$(x_{i+1}, y_{i+1})$も、接点$(x_i, y_i)$から離れていく。
+ゆえに、$\tau$を大きくするほど、接線が、真の関数y(x)を近似的に表すという仮定は成り立ちにくくなるため、真の値と、オイラー法で求めた近似値は、誤差が大きくなることが考えられる。
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=150mm]{y_euler.png}
+	\caption{y=y(x)のオイラー法による近似}
+	\label{fig:y_euler}
+\end{figure}
+
+\section{問題4（実験結果）}
+時間刻み$\tau$は、0.2、0.15、0.1、0.05、0.01、0.005、0.001の7つを選んだ。
+
+初期値は、高さ0m、初期速度40m/s、投射角度45度、空気抵抗ありとした。
+
+$\tau = 0.2$の時のグラフを、図\ref{fig:tau_0.2}に示す。
+
+$\tau = 0.15$の時のグラフを、図\ref{fig:tau_0.15}に示す。
+
+$\tau = 0.1$の時のグラフを、図\ref{fig:tau_0.1}に示す。
+
+$\tau = 0.05$の時のグラフを、図\ref{fig:tau_0.05}に示す。
+
+$\tau = 0.01$の時のグラフを、図\ref{fig:tau_0.01}に示す。
+
+$\tau = 0.005$の時のグラフを、図\ref{fig:tau_0.005}に示す。
+
+$\tau = 0.001$の時のグラフを、図\ref{fig:tau_0.001}に示す。
+
+x軸は、ボールの水平方向への移動距離(m)を、y軸は、ボールの軌道の高さ(m)を表す。
+
+理論値というラベルがついた曲線は、空気抵抗なしの場合の、解析的に計算したボールの軌道である。
+
+実測値というラベルがついた曲線は、オイラー法により求めた、ボールの軌道である。
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.2.png}
+	\caption{$\tau = 0.2$の時のボールの軌道}
+	\label{fig:tau_0.2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.15.png}
+	\caption{$\tau = 0.15$の時のボールの軌道}
+	\label{fig:tau_0.15}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.1.png}
+	\caption{$\tau = 0.1$の時のボールの軌道}
+	\label{fig:tau_0.1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.05.png}
+	\caption{$\tau = 0.05$の時のボールの軌道}
+	\label{fig:tau_0.05}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.01.png}
+	\caption{$\tau = 0.01$の時のボールの軌道}
+	\label{fig:tau_0.01}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.005.png}
+	\caption{$\tau = 0.005$の時のボールの軌道}
+	\label{fig:tau_0.005}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.001.png}
+	\caption{$\tau = 0.001$の時のボールの軌道}
+	\label{fig:tau_0.001}
+\end{figure}
+
+\section{問題5}
+\subsection{ホイン法}
+$$
+\frac{dy}{dx} = d(x,y), y(x_0) = y_0
+$$
+の初期値問題を考える。
+y(x+h)の値は、関数yの点xの周りのテイラー展開で、
+\begin{align*}
+	y(x+h) &= y(x) + \frac{y'(x)}{1!}((x+h) - x) + \frac{y''(x)}{2!}((x+h) - x)^2 + \dots + \frac{y^{(n)}(x)}{n!}((x+h) - x)^n + \dots\\
+	&= y(x) + \frac{h}{1!}y'(x) + \frac{h^2}{2!}y''(x) + \dots + \frac{h^n}{n!}y^{(n)}(x) + \dots
+\end{align*}
+と表せる。
+これを1階微分の項まで用いた時、
+$$
+y(x+h) = y(x) + \frac{h}{1!}y'(x) = y(x) + hf(x,y)
+$$
+となる。
+
+すなわち、オイラー法は微分方程式の解をhの一次式で近似しているといえる。
+
+したがって、精度を上げるには、2次以上の項を用いて、テイラー級数近似を行えば良い。
+
+テイラー展開を二次項まで利用した場合を考える。
+
+y(x+h)の近似は、
+$$
+y(x+h) \approx y(x) + \frac{h}{1!}y'(x) + \frac{h^2}{2!}y''(x)
+$$
+と表せる。
+
+ここで、f(x,y)のxによる微分を、適当な刻み幅khで差分法により計算すると、
+\begin{align*}
+	\frac{df(x,y)}{dx} &\approx \frac{f(x+kh, y(x+kh)) - f(x,y)}{kh}\\
+	&\approx \frac{f(x+kh, y(x) + khf(x,y)) - f(x,y)}{kh}
+\end{align*}
+と書けるので、これを元の式に代入すると、
+$$
+y(x+h) = y(x) + (1 - \frac{1}{2k})hf(x,y) + \frac{h}{2k}f(x+kh, y(x) + khf(x,y))
+$$
+という公式が得られる。
+
+この公式において、k=1と置いた時に得られる
+$$
+y(x+h) = y(x) + \frac{h}{2}f(x,y) + \frac{h}{2}f(x+kh, y(x) + hf(x,y))
+$$
+という公式をホイン法または、改良オイラー法と呼ぶ。
+
+\subsection{ホイン法の実装}
+今回の実験の、初期値問題は、
+\begin{align*}
+	\frac{dv}{dt} &= f(v) = \frac{1}{m}F_a(v) - g\hat{y}, F_a(v) = -\frac{1}{2}C_d\rho A|v|v\\
+	\frac{dv}{dt} &= v\\
+\end{align*}
+である。
+
+ホイン法で、$v(t + \tau)$の値を求める式は、
+\begin{align*}
+	v(t + \tau) &= v(t) + \frac{\tau}{2}(k_1 + k_2)\\
+	k_1 &= \frac{dv}{dt} = f(v)\\
+	k_2 &= \frac{d^2}{dt^2}v = f(v(t) + \tau f(v)) = f(v + tk_1)\\
+\end{align*}
+である。
+
+$r(t + \tau)$を求める式は、
+\begin{align*}
+	r(t + \tau) = r(t) + \tau v(t)\\
+\end{align*}
+である。
+
+ホイン法を実装したプログラムを、Listing\ref{pg:heun}に示す。
+
+このプログラムは、上で求めた、ホイン法による漸化式にしたがって、各時刻の、速度と位置の値を計算している。
+
+\lstinputlisting[language=C, numbers=left, breaklines=true, 
+basicstyle=\ttfamily\footnotesize, frame=single, caption=ホイン法による野球ボールの軌道計算のプログラム, 
+label=pg:heun]{baseball_heun.cpp}
+
+\subsection{ホイン法の結果}
+時間刻み$\tau$は、0.2、0.15、0.1、0.05、0.01、0.005、0.001の7つを選んだ。
+
+初期値は、高さ0m、初期速度40m/s、投射角度45度、空気抵抗ありとした。
+
+$\tau = 0.2$の時のグラフを、図\ref{fig:tau_0.2_heun}に示す。
+
+$\tau = 0.15$の時のグラフを、図\ref{fig:tau_0.15_heun}に示す。
+
+$\tau = 0.1$の時のグラフを、図\ref{fig:tau_0.1_heun}に示す。
+
+$\tau = 0.05$の時のグラフを、図\ref{fig:tau_0.05_heun}に示す。
+
+$\tau = 0.01$の時のグラフを、図\ref{fig:tau_0.01_heun}に示す。
+
+$\tau = 0.005$の時のグラフを、図\ref{fig:tau_0.005_heun}に示す。
+
+$\tau = 0.001$の時のグラフを、図\ref{fig:tau_0.001_heun}に示す。
+
+x軸は、ボールの水平方向への移動距離(m)を、y軸は、ボールの軌道の高さ(m)を表す。
+
+理論値というラベルがついた曲線は、空気抵抗なしの場合の、解析的に計算したボールの軌道である。
+
+実測値というラベルがついた曲線は、オイラー法により求めた、ボールの軌道である。
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.2_heun.png}
+	\caption{ホイン法で求めた$\tau = 0.2$の時のボールの軌道}
+	\label{fig:tau_0.2_heun}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.15_heun.png}
+	\caption{ホイン法で求めた$\tau = 0.15$の時のボールの軌道}
+	\label{fig:tau_0.15_heun}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.1_heun.png}
+	\caption{ホイン法で求めた$\tau = 0.1$の時のボールの軌道}
+	\label{fig:tau_0.1_heun}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.05_heun.png}
+	\caption{ホイン法で求めた$\tau = 0.05$の時のボールの軌道}
+	\label{fig:tau_0.05_heun}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.01_heun.png}
+	\caption{ホイン法で求めた$\tau = 0.01$の時のボールの軌道}
+	\label{fig:tau_0.01_heun}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.005_heun.png}
+	\caption{ホイン法で求めた$\tau = 0.005$の時のボールの軌道}
+	\label{fig:tau_0.005_heun}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=100mm]{tau_0.001_heun.png}
+	\caption{ホイン法で求めた$\tau = 0.001$の時のボールの軌道}
+	\label{fig:tau_0.001_heun}
+\end{figure}
+
+\section{考察}
+グラフに理論値として示した曲線は、空気抵抗なしの場合のボールの軌道である。一方、実測値として示した曲線は、空気抵抗ありの場合のボールの軌道である。
+二つの曲線を比較すると、随分飛距離に差があることがわかる。
+2つの大きな違いは、空気抵抗があるか、ないかであるから、この結果に影響を及ぼしたのは、空気抵抗であろうと考えられる。
+
+果たして、空気抵抗の影響とは、こんなに大きいものだろうか。空気抵抗の影響の大きさを、計算式から考えてみる。
+
+ここで、オイラー法による、速度の計算式は、
+\begin{align*}
+	v_{i+1} &= v_{i} + \tau \cdot (\frac{1}{m} F_a(v_{i}) - g\hat{y})\\
+	F_a(v) &= -\frac{1}{2}C_d\rho A|v|v\\
+\end{align*}
+である。
+
+この式の大まかな意味を考えると、$F_a$は負の値であるから、$v_{i+1}$は、$v_i$から、$F_a$の値に比例した大きさの値を引いた値、であることがわかる。
+
+ここで、$F_a$の式は、変数の$|v|v$に係数をかけた式と見ることができるが、$|v|$は、プログラム中、L2ノルムで定義されているから、直角三角形の斜辺が常に、3辺のうち、長さが最大であることを考えると、$|v| > v$が成り立つ。したがって、$|v|v > v^2$が成り立つ。
+
+よって、単純化して考えると、$F_a$は、vの2乗に比例した値よりも大きい値を出力する関数である。
+すなわち、空気抵抗は、vの2乗に比例した値よりも大きい値であると考えることができる。
+
+ゆえに、このような大きな値が空気抵抗として、ボールの速度を減衰させるから、空気抵抗がない場合と、空気抵抗がある場合の飛距離に、大きな差が出たのではないだろうか。
+
+\section*{参考文献・引用文献}
+
+\begin{thebibliography}{99}
+\bibitem{stulab4} 宮里 智樹 . “2023-知能情報基礎演習 4-1 微分方程式の数値解法” . $2023 知能情報基礎演習4 授業資料$ .
+\bibitem{tokyo} 大竹 豊, AN Qi . “微分方程式の数値解法” . $東京大学工学部 精密工学科 プログラミング応用 I・ II 授業資料$ . \url(http://www.den.t.u-tokyo.ac.jp/ad_prog/ode/) , (\today ) .
+\end{thebibliography}
+
+\end{document}

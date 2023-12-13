@@ -1,0 +1,8 @@
+.vscode
+out/*
+!out/*.pdf
+*.png
+baseball
+baseball_heun
+*.dat
+*.txt

@@ -1,0 +1,11 @@
+.vscode
+out/*
+!out/*.pdf
+*.png
+RainData/*
+RainData_fix/*
+RxData/*
+RxData_fix/*
+RxData_unit_conv/*
+RainData_unit_conv/*
+*.zip
